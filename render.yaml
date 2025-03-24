@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: channel-factory-rfi
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: npm install --prefix rfi-interface && npm run build --prefix rfi-interface && pip install -r requirements.txt && mkdir -p frontend/dist && cp -r rfi-interface/dist/* frontend/dist/
+    startCommand: gunicorn responses_api:app --bind 0.0.0.0:$PORT --workers 2 --worker-class uvicorn.workers.UvicornWorker
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.10.0 
