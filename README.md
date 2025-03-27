@@ -2,19 +2,26 @@
 
 This repository contains a standalone HTML application that connects to the Channel Factory RFI API hosted on Render.com.
 
-## Available Versions
+## Working Version
 
-- **Light Theme**: [https://aispowers.github.io/channel-factory-rfi/](https://aispowers.github.io/channel-factory-rfi/)
-- **Dark Theme**: [https://aispowers.github.io/channel-factory-rfi/dark.html](https://aispowers.github.io/channel-factory-rfi/dark.html)
-- **Dark Theme V2** ✨ **(WORKING VERSION)**: [https://aispowers.github.io/channel-factory-rfi/rfi-dark-v2.html](https://aispowers.github.io/channel-factory-rfi/rfi-dark-v2.html)
+**➡️ [Click here to use the application](https://aispowers.github.io/channel-factory-rfi/main.html)**
 
 ## How to Use
 
-1. Open the V2 link above in your web browser (recommended)
+1. Open the link above in your web browser
 2. Type your question in the text input area
 3. Press Enter or click the Send button
 4. Wait for the response from the API
 5. View sources and provide feedback as needed
+
+## Features
+
+The application includes:
+- Dark-themed UI matching the original design
+- Chat interface with response formatting
+- History tab to review past conversations
+- Feedback Statistics with charts and analytics
+- Source citation for responses
 
 ## Troubleshooting
 
@@ -23,8 +30,7 @@ If you encounter any issues:
 1. Check your internet connection
 2. Make sure the Channel Factory API is up and running
 3. Try refreshing the page
-4. Use the "Show Debug Info" button at the bottom of the page to test the API connection
-5. Clear your browser cache if you're seeing an outdated version
+4. Clear your browser cache if you're seeing an outdated version
 
 ## Technical Information
 
@@ -33,15 +39,6 @@ This application:
 - Connects to the Channel Factory RFI API at https://channel-factory-rfi.onrender.com
 - Stores conversation history in your browser's localStorage
 - Does not require any installation or server setup
-
-## Development
-
-If you need to modify this application:
-
-1. Edit the HTML file directly
-2. Test it by opening the file in your browser
-3. Commit and push changes to this repository
-4. GitHub Pages will automatically update the live version
 
 ## Privacy Note
 
