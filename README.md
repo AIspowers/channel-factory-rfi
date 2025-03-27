@@ -5,11 +5,12 @@ This repository contains a standalone HTML application that connects to the Chan
 ## Available Versions
 
 - **Light Theme**: [https://aispowers.github.io/channel-factory-rfi/](https://aispowers.github.io/channel-factory-rfi/)
-- **Dark Theme**: [https://aispowers.github.io/channel-factory-rfi/dark.html](https://aispowers.github.io/channel-factory-rfi/dark.html) ← Recommended
+- **Dark Theme**: [https://aispowers.github.io/channel-factory-rfi/dark.html](https://aispowers.github.io/channel-factory-rfi/dark.html)
+- **Dark Theme V2** ✨ **(WORKING VERSION)**: [https://aispowers.github.io/channel-factory-rfi/rfi-dark-v2.html](https://aispowers.github.io/channel-factory-rfi/rfi-dark-v2.html)
 
 ## How to Use
 
-1. Open either of the links above in your web browser
+1. Open the V2 link above in your web browser (recommended)
 2. Type your question in the text input area
 3. Press Enter or click the Send button
 4. Wait for the response from the API
