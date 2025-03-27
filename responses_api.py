@@ -13,6 +13,7 @@ from typing import List, Dict, Optional, Any
 import httpx
 import uvicorn
 from dotenv import load_dotenv
+import asyncio
 
 # Load environment variables
 load_dotenv()
@@ -136,78 +137,129 @@ async def search_documents(query: Query):
             "instructions": "You are an expert on Channel Factory's RFI (Request for Information) documents. Your task is to provide accurate, relevant information from these documents in response to user queries. Present information in a clear, organized manner with proper formatting. When citing information, include the source document name. If you don't know the answer, say so rather than making up information."
         }
         
-        # Make the request to the Responses API
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{api_base}/responses",
-                headers=headers,
-                json=payload,
-                timeout=60.0
-            )
-            
-            # Check for errors
-            if response.status_code != 200:
-                logger.error(f"API error: {response.status_code}, {response.text}")
-                raise HTTPException(
-                    status_code=response.status_code, 
-                    detail=f"Error from OpenAI API: {response.text}"
-                )
-            
-            # Parse the response
-            data = response.json()
-            
-            # Extract the response text and sources
-            response_text = ""
-            sources = []
-            
-            # Loop through the output to find the message
-            for output in data.get("output", []):
-                if output.get("type") == "message":
-                    for content in output.get("content", []):
-                        if content.get("type") == "output_text":
-                            response_text = content.get("text", "")
-                            
-                            # Extract citations
-                            for annotation in content.get("annotations", []):
-                                if annotation.get("type") == "file_citation":
-                                    file_id = annotation.get("file_id")
-                                    filename = annotation.get("filename", "Unknown source")
+        # Make the request to the Responses API with retry logic
+        max_retries = 3
+        retry_delay = 2  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        f"{api_base}/responses",
+                        headers=headers,
+                        json=payload,
+                        timeout=60.0
+                    )
+                    
+                    # Handle rate limits
+                    if response.status_code == 429:
+                        retry_after = int(response.headers.get("retry-after", retry_delay))
+                        logger.warning(f"Rate limited. Retrying after {retry_after} seconds. Attempt {attempt+1}/{max_retries}")
+                        
+                        if attempt < max_retries - 1:
+                            await asyncio.sleep(retry_after)
+                            continue
+                        else:
+                            raise HTTPException(
+                                status_code=429, 
+                                detail="OpenAI API rate limit exceeded. Please try again later."
+                            )
+                    
+                    # Handle other errors
+                    if response.status_code != 200:
+                        error_detail = response.text
+                        try:
+                            error_json = response.json()
+                            if "error" in error_json:
+                                error_detail = error_json["error"].get("message", error_json["error"])
+                        except:
+                            pass
+                        
+                        logger.error(f"API error: {response.status_code}, {error_detail}")
+                        raise HTTPException(
+                            status_code=response.status_code, 
+                            detail=f"Error from OpenAI API: {error_detail}"
+                        )
+                    
+                    # Parse the response
+                    data = response.json()
+                    
+                    # Extract the response text and sources
+                    response_text = ""
+                    sources = []
+                    
+                    # Loop through the output to find the message
+                    for output in data.get("output", []):
+                        if output.get("type") == "message":
+                            for content in output.get("content", []):
+                                if content.get("type") == "output_text":
+                                    response_text = content.get("text", "")
                                     
-                                    source = {
-                                        "file": filename,
-                                        "title": filename.replace(".pdf", "").replace("_", " "),
-                                        "quote": ""  # OpenAI might not provide quotes in this format
-                                    }
-                                    
-                                    if source not in sources:
-                                        sources.append(source)
-            
-            # Enhance the formatting
-            enhanced_response = enhance_formatting(response_text)
-            
-            # Generate a conversation ID and store the conversation
-            conversation_id = f"resp_{len(conversations_db) + 1}_{int(time.time())}"
-            conversations_db[conversation_id] = {
-                "id": conversation_id,
-                "timestamp": datetime.now().isoformat(),
-                "question": query.question,
-                "answer": enhanced_response,
-                "sources": sources,
-                "response_id": data.get("id", "")
-            }
-            
-            logger.info(f"Stored conversation with ID: {conversation_id}")
-            
-            # Return the response
-            return SearchResponse(
-                answer=enhanced_response,
-                sources=sources,
-                conversation_id=conversation_id
-            )
-    
+                                    # Extract citations
+                                    for annotation in content.get("annotations", []):
+                                        if annotation.get("type") == "file_citation":
+                                            file_id = annotation.get("file_id")
+                                            filename = annotation.get("filename", "Unknown source")
+                                            
+                                            source = {
+                                                "file": filename,
+                                                "title": filename.replace(".pdf", "").replace("_", " "),
+                                                "quote": ""  # OpenAI might not provide quotes in this format
+                                            }
+                                            
+                                            if source not in sources:
+                                                sources.append(source)
+                    
+                    # If we got no content, provide a friendly error
+                    if not response_text:
+                        logger.warning("Received empty response from OpenAI API")
+                        response_text = "I'm sorry, but I couldn't generate a response at this time. Please try again or rephrase your question."
+                    
+                    # Enhance the formatting
+                    enhanced_response = enhance_formatting(response_text)
+                    
+                    # Generate a conversation ID and store the conversation
+                    conversation_id = f"resp_{len(conversations_db) + 1}_{int(time.time())}"
+                    conversations_db[conversation_id] = {
+                        "id": conversation_id,
+                        "timestamp": datetime.now().isoformat(),
+                        "question": query.question,
+                        "answer": enhanced_response,
+                        "sources": sources,
+                        "response_id": data.get("id", "")
+                    }
+                    
+                    logger.info(f"Stored conversation with ID: {conversation_id}")
+                    
+                    # Return the response
+                    return SearchResponse(
+                        answer=enhanced_response,
+                        sources=sources,
+                        conversation_id=conversation_id
+                    )
+                
+            except httpx.TimeoutException:
+                logger.warning(f"Request timed out. Retrying. Attempt {attempt+1}/{max_retries}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(retry_delay)
+                else:
+                    raise HTTPException(
+                        status_code=504, 
+                        detail="Request to OpenAI API timed out. Please try again later."
+                    )
+            except httpx.RequestError as e:
+                logger.error(f"Request error: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Error connecting to OpenAI API: {str(e)}")
+                
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         logger.error(f"Error during search: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"An unexpected error occurred: {str(e)}. Please try again later."
+        )
 
 @app.post("/feedback")
 async def submit_feedback(feedback: Feedback):
@@ -343,4 +395,4 @@ if __name__ == "__main__":
     os.makedirs("frontend/dist/assets", exist_ok=True)
     
     print(f"Starting server on port {port}")
-    uvicorn.run("responses_api:app", host="0.0.0.0", port=port, reload=True) 
+    uvicorn.run("responses_api:app", host="0.0.0.0", port=port) 
