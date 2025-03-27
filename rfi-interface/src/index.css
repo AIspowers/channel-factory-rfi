@@ -636,26 +636,217 @@ button:disabled {
   to { opacity: 1; }
 }
 
+/* Updated media queries for better responsiveness */
 @media (max-width: 600px) {
   #root {
-    padding: 0.5rem;
+    padding: 0.25rem;
+    width: 100%;
   }
   
   .app-container {
     padding: 0;
+    max-height: 100vh;
+    height: 100vh;
+  }
+  
+  header {
+    padding: 0.75rem 0;
+    margin-bottom: 0.5rem;
+    flex-direction: column;
+    gap: 0.5rem;
   }
   
   header h1 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+  }
+  
+  .nav-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .nav-button {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .chat-container {
+    padding: 0.5rem 0;
+    gap: 0.75rem;
+  }
+  
+  .question-form {
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  textarea {
+    font-size: 0.9rem;
+    padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+  }
+  
+  .send-button {
+    width: 24px;
+    height: 24px;
+    right: 5px;
+    transform: translateY(-4px);
+  }
+  
+  .response-container {
+    padding: 0.75rem;
+  }
+  
+  .response {
+    padding: 0.75rem;
+  }
+  
+  .formatted-content {
+    font-size: 0.9rem;
+  }
+  
+  .formatted-content pre {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  
+  .sources-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .sources-toggle {
+    width: 100%;
+  }
+  
+  .feedback {
+    padding: 0.5rem;
+  }
+  
+  .feedback-buttons {
+    flex-wrap: wrap;
+  }
+  
+  .feedback-button {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
   }
   
   .conversation-item {
     flex-direction: column;
     align-items: flex-start;
+    padding: 0.75rem;
+  }
+  
+  .conversation-question {
+    font-size: 0.9rem;
+    -webkit-line-clamp: 2;
   }
   
   .view-button {
     margin-top: 0.5rem;
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .feedback-comment-form textarea {
+    min-height: 60px;
+  }
+  
+  .detail-content {
+    padding: 0.75rem;
+  }
+  
+  .detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+/* Medium size devices like tablets */
+@media (min-width: 601px) and (max-width: 900px) {
+  #root {
+    padding: 0.5rem;
+  }
+  
+  .app-container {
+    padding: 0.5rem;
+  }
+  
+  header h1 {
+    font-size: 1.3rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .feedback-stats-container {
+    padding: 0.5rem;
+  }
+  
+  .sources ul {
+    margin-left: 1rem;
+  }
+}
+
+/* Fix potential width issues across all screen sizes */
+.response-container,
+.feedback-stats-container,
+.dashboard,
+.sources,
+.feedback,
+.feedback-comment-form,
+.formatted-content {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Ensure images and other media don't overflow containers */
+img,
+video,
+iframe,
+table {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Fix for mobile portrait orientation */
+@media (max-height: 700px) {
+  .app-container {
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  .chat-container {
+    max-height: calc(100vh - 120px);
+  }
+}
+
+/* Fix for very small screens */
+@media (max-width: 320px) {
+  .nav-buttons {
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: stretch;
+  }
+  
+  .nav-button {
+    text-align: center;
+  }
+  
+  .feedback-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .feedback-button {
+    width: 100%;
   }
 }
 

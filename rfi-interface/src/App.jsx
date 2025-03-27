@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 
@@ -20,12 +20,45 @@ function App() {
   const [feedbackStats, setFeedbackStats] = useState(null);
   const [feedbackStatsLoading, setFeedbackStatsLoading] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
 
   const [activeTab, setActiveTab] = useState("chat");
 
   const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
   const textareaRef = useRef(null);
+  const appContainerRef = useRef(null);
+
+  // Handle mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 600);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Fix iOS viewport issues
+  useLayoutEffect(() => {
+    // Fix viewport height for mobile browsers
+    const setViewportProperty = () => {
+      // First we get the viewport height and multiply it by 1% to get a value for a vh unit
+      let vh = window.innerHeight * 0.01;
+      // Then we set the value in the --vh custom property to the root of the document
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+      
+      if (appContainerRef.current) {
+        appContainerRef.current.style.height = `calc(100 * var(--vh, 1vh))`;
+      }
+    };
+
+    setViewportProperty();
+    window.addEventListener('resize', setViewportProperty);
+    return () => window.removeEventListener('resize', setViewportProperty);
+  }, []);
 
   // Auto-resize textarea as user types
   useEffect(() => {
@@ -569,7 +602,7 @@ function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className="app-container" ref={appContainerRef}>
       <header>
         <h1>RFI Powered by Channel Factory</h1>
         <div className="nav-buttons">
