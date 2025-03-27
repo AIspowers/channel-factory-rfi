@@ -118,6 +118,10 @@ async def search_documents(query: Query):
     try:
         logger.info(f"Received search query: {query.question}")
         
+        # Log the API key status (redacted for security)
+        api_key_status = "Valid" if api_key and len(api_key) > 30 else "Invalid or missing"
+        logger.info(f"API key status: {api_key_status}")
+        
         # Set up the headers for the API request
         headers = {
             "Content-Type": "application/json",
@@ -143,6 +147,7 @@ async def search_documents(query: Query):
         
         for attempt in range(max_retries):
             try:
+                logger.info(f"Making OpenAI API request (attempt {attempt+1}/{max_retries})")
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
                         f"{api_base}/responses",
@@ -150,6 +155,9 @@ async def search_documents(query: Query):
                         json=payload,
                         timeout=60.0
                     )
+                    
+                    # Log the response status
+                    logger.info(f"OpenAI API response status: {response.status_code}")
                     
                     # Handle rate limits
                     if response.status_code == 429:
@@ -160,6 +168,7 @@ async def search_documents(query: Query):
                             await asyncio.sleep(retry_after)
                             continue
                         else:
+                            logger.error("Max retries reached for rate limit")
                             raise HTTPException(
                                 status_code=429, 
                                 detail="OpenAI API rate limit exceeded. Please try again later."
@@ -182,7 +191,16 @@ async def search_documents(query: Query):
                         )
                     
                     # Parse the response
-                    data = response.json()
+                    try:
+                        data = response.json()
+                        logger.info("Successfully parsed JSON response from OpenAI API")
+                    except Exception as e:
+                        logger.error(f"Error parsing JSON response: {str(e)}")
+                        logger.error(f"Response text: {response.text[:500]}...")  # Log first 500 chars
+                        raise HTTPException(
+                            status_code=500,
+                            detail="Failed to parse response from OpenAI API"
+                        )
                     
                     # Extract the response text and sources
                     response_text = ""
@@ -243,6 +261,7 @@ async def search_documents(query: Query):
                 if attempt < max_retries - 1:
                     await asyncio.sleep(retry_delay)
                 else:
+                    logger.error("Max retries reached for timeout")
                     raise HTTPException(
                         status_code=504, 
                         detail="Request to OpenAI API timed out. Please try again later."

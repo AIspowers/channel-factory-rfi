@@ -167,22 +167,42 @@ function App() {
     const currentQuestion = question;
 
     try {
+      console.log(`Sending request to: ${apiBaseUrl}/search`);
+      
       const res = await fetch(`${apiBaseUrl}/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: currentQuestion }),
       });
 
-      if (!res.ok) throw new Error("Failed to get response");
+      console.log(`Response status: ${res.status}`);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`API error: ${res.status} - ${errorText}`);
+        
+        // Try to parse the error as JSON
+        let errorDetail = "An error occurred while processing your request.";
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorDetail = errorJson.detail || errorText;
+        } catch (e) {
+          // If parsing fails, use the raw error text
+          errorDetail = errorText;
+        }
+        
+        throw new Error(`Server error (${res.status}): ${errorDetail}`);
+      }
 
       const data = await res.json();
+      console.log("Received successful response");
       setResponse(data);
       
       // Clear the input field after successfully receiving a response
       setQuestion("");
     } catch (err) {
       console.error("Error:", err);
-      setError("Failed to get response. Please try again.");
+      setError(`${err.message || "Failed to get response. Please try again."}`);
     } finally {
       setLoading(false);
     }
