@@ -224,6 +224,7 @@
             cursor: pointer;
             font-size: 12px;
             margin-top: 20px;
+            display: none;
         }
         /* Feedback Stats Styles */
         .stats-container {
@@ -421,6 +422,7 @@
         </div>
         
         <div id="historyContainer" style="display: none;"></div>
+        
         <div id="feedbackContainer" style="display: none;">
             <h2>Feedback Statistics</h2>
             
@@ -469,15 +471,6 @@
                 </div>
             </div>
         </div>
-        
-        <button id="toggleDebug" class="toggle-debug">Show Debug Info</button>
-        <div id="debugPanel" class="debug-panel">
-            <h3>Debug Information</h3>
-            <div>
-                <button id="testHealthBtn">Test API Connection</button>
-                <div id="debugOutput"></div>
-            </div>
-        </div>
     </div>
     
     <script>
@@ -495,8 +488,6 @@
         const chatTab = document.getElementById('chatTab');
         const historyTab = document.getElementById('historyTab');
         const feedbackTab = document.getElementById('feedbackTab');
-        const debugPanel = document.getElementById('debugPanel');
-        const debugOutput = document.getElementById('debugOutput');
         
         // Feedback stats
         let feedbackStats = {
@@ -908,62 +899,8 @@
             return div.innerHTML;
         }
         
-        // Toggle debug panel
-        document.getElementById('toggleDebug').addEventListener('click', function() {
-            debugPanel.classList.toggle('active');
-            this.textContent = debugPanel.classList.contains('active') ? 'Hide Debug Info' : 'Show Debug Info';
-        });
-        
-        // Test health button
-        document.getElementById('testHealthBtn').addEventListener('click', async function() {
-            debugOutput.innerHTML = 'Testing API connection...';
-            try {
-                const response = await fetch(`${API_URL}/health`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const text = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch (e) {
-                    data = text;
-                }
-                
-                debugOutput.innerHTML = `
-                    <p>Status: ${response.status} ${response.statusText}</p>
-                    <p>Response: ${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}</p>
-                `;
-            } catch (error) {
-                debugOutput.innerHTML = `
-                    <p>Error: ${error.message}</p>
-                    <p>This could indicate a network issue or CORS restriction.</p>
-                `;
-            }
-        });
-        
-        // Check API health on load
-        window.addEventListener('load', async () => {
-            try {
-                const response = await fetch(`${API_URL}/health`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    console.log('API health check passed');
-                } else {
-                    console.warn('API health check failed with status:', response.status);
-                }
-            } catch (error) {
-                console.error('API health check error:', error);
-            }
-            
+        // Add some demo feedback data if none exists
+        window.addEventListener('load', () => {            
             // Add sample data if none exists
             if (feedbackStats.total === 0) {
                 // Add sample data
