@@ -1,80 +1,42 @@
 # Channel Factory RFI Application
 
-An AI-powered Q&A application that allows users to ask questions about Channel Factory and receive accurate answers based on provided documentation.
+This repository contains the Channel Factory RFI (Request for Information) application, which allows users to ask questions about Channel Factory and receive AI-powered responses.
 
-## Features
+## Live Demo
 
-- AI-powered responses using OpenAI API
-- User-friendly chat interface
-- Response feedback system
-- Conversation history
-- Feedback statistics
-- Document-based knowledge source
-- Docker support for easy deployment
+The application is hosted on GitHub Pages and can be accessed at:
+https://aispowers.github.io/channel-factory-rfi/
 
-## Tech Stack
+## How to Use
 
-- **Frontend**: React, Vite
-- **Backend**: Python, Flask
-- **AI**: OpenAI API
-- **Deployment**: Docker, Render.com
+1. Open the application in your web browser
+2. Type your question in the input field
+3. Click "Send" to get a response
+4. The system may take 10-15 seconds to respond on the first query
 
-## Local Development
+## How to Enable GitHub Pages
 
-### Prerequisites
+To host this application on GitHub Pages:
 
-- Node.js (v16+)
-- Python (v3.8+)
-- Docker and Docker Compose (optional)
+1. Go to the repository Settings tab
+2. Scroll down to the "GitHub Pages" section
+3. Under "Source", select "main" branch
+4. Click "Save"
+5. Wait a few minutes for the site to be published
+6. Once published, you'll see a message with the URL
 
-### Setup
+Your application will be available at: `https://aispowers.github.io/channel-factory-rfi/`
 
-1. Clone this repository
-   ```bash
-   git clone https://github.com/AIspowers/channel-factory-rfi.git
-   cd channel-factory-rfi
-   ```
+## Technical Information
 
-2. Set up environment variables
-   ```bash
-   # Create a .env file in the root directory with your OpenAI API key
-   echo "OPENAI_API_KEY=your_openai_api_key" > .env
-   ```
+- The frontend is a simple HTML application with JavaScript
+- The backend API is hosted on Render.com
+- The application uses the OpenAI API to power the responses
 
-3. Option 1: Run with Docker
-   ```bash
-   docker-compose up --build
-   ```
-   
-4. Option 2: Run without Docker
-   
-   a. Start the backend
-   ```bash
-   pip install -r requirements.txt
-   python responses_api.py
-   ```
-   
-   b. Start the frontend (in a separate terminal)
-   ```bash
-   cd rfi-interface
-   npm install
-   npm run dev
-   ```
+## Troubleshooting
 
-5. Access the application
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:8001
+If you encounter issues with the application:
 
-## Deployment
-
-This application is designed to be deployed on Render.com with the following setup:
-
-1. Connect your GitHub repository to Render.com
-2. Set up a Web Service with the following settings:
-   - Build Command: `npm install --prefix rfi-interface && npm run build --prefix rfi-interface && pip install -r requirements.txt`
-   - Start Command: `gunicorn responses_api:app --bind 0.0.0.0:$PORT`
-3. Add the environment variable `OPENAI_API_KEY` in the Render.com dashboard
-
-## License
-
-MIT 
+1. Click "Show Debug Info" at the bottom of the page
+2. Click "Test API Connection" to check the API status
+3. If the API is not responding, it may be in a cold start state - try again in a few moments
