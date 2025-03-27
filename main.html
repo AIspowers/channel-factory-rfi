@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFI Powered by Channel Factory</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #111;
+            color: white;
+            min-height: 100vh;
+        }
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #f44336;
+            margin: 0;
+            font-size: 24px;
+        }
+        .tabs {
+            display: flex;
+            gap: 20px;
+        }
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            background-color: transparent;
+            color: white;
+            border: none;
+        }
+        .tab.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .chat-container {
+            background-color: #222;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .question-form {
+            display: flex;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px 50px 12px 15px;
+            border-radius: 20px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: white;
+            resize: none;
+            font-size: 16px;
+            min-height: 46px;
+            line-height: 1.5;
+        }
+        .send-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            background-color: #f44336;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .send-button:hover {
+            background-color: #d32f2f;
+        }
+        .loading-indicator {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+            color: #aaa;
+        }
+        .loading-indicator.active {
+            display: block;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .response-container {
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .error-message {
+            background-color: rgba(255, 67, 54, 0.2);
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        .error-message.active {
+            display: block;
+        }
+        .response {
+            background-color: #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .response-controls {
+            display: flex;
+            margin-top: 15px;
+            gap: 10px;
+        }
+        .sources-button {
+            background-color: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        .sources-button:after {
+            content: "▼";
+            margin-left: 5px;
+            font-size: 10px;
+        }
+        .sources-container {
+            background-color: #2a2a2a;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        .sources-container.active {
+            display: block;
+        }
+        .feedback {
+            display: flex;
+            gap: 10px;
+        }
+        .feedback-button {
+            background-color: transparent;
+            border: 1px solid #555;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 20px;
+        }
+        .feedback-button:hover {
+            background-color: #444;
+        }
+        .history-item {
+            border-bottom: 1px solid #444;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .history-question {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #f44336;
+        }
+        .history-answer {
+            margin-bottom: 10px;
+        }
+        .sources {
+            font-size: 14px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        .source-item {
+            margin-bottom: 5px;
+        }
+        .debug-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #222;
+            border-radius: 8px;
+            display: none;
+            font-size: 12px;
+        }
+        .debug-panel.active {
+            display: block;
+        }
+        .toggle-debug {
+            background-color: transparent;
+            border: 1px solid #555;
+            color: #aaa;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 20px;
+            display: none;
+        }
+        /* Feedback Stats Styles */
+        .stats-container {
+            background-color: #222;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background-color: #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .stat-title {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .stat-value {
+            font-size: 24px;
+            color: #f44336;
+        }
+        .bar-chart {
+            background-color: #444;
+            border-radius: 4px;
+            height: 24px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .bar {
+            height: 100%;
+            background-color: #f44336;
+        }
+        .chart-container {
+            display: flex;
+            gap: 8px;
+            height: 150px;
+            align-items: flex-end;
+            margin-top: 20px;
+        }
+        .chart-bar {
+            flex-grow: 1;
+            background-color: #f44336;
+            position: relative;
+        }
+        .chart-label {
+            position: absolute;
+            top: -20px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+        }
+        .chart-value {
+            position: absolute;
+            top: -40px;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .stat-description {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #aaa;
+        }
+        .recent-feedback {
+            margin-top: 20px;
+        }
+        .feedback-list {
+            margin-top: 10px;
+        }
+        .feedback-item {
+            background-color: #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .feedback-date {
+            color: #aaa;
+            font-size: 12px;
+        }
+        .feedback-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        .feedback-type.positive {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+        }
+        .feedback-type.negative {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+        .pie-chart-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+        }
+        .pie-chart {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(#4CAF50 var(--positive-percent), #f44336 var(--positive-percent));
+        }
+        .pie-chart-inner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-size: 14px;
+        }
+        .pie-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        .positive-color {
+            background-color: #4CAF50;
+        }
+        .negative-color {
+            background-color: #f44336;
+        }
+        .neutral-color {
+            background-color: #FFC107;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>RFI Powered by Channel Factory</h1>
+            <div class="tabs">
+                <button class="tab active" id="chatTab">Chat</button>
+                <button class="tab" id="historyTab">History</button>
+                <button class="tab" id="feedbackTab">Feedback Stats</button>
+            </div>
+        </div>
+        
+        <div class="chat-container">
+            <div class="question-form">
+                <textarea id="questionInput" placeholder="Ask anything..."></textarea>
+                <button id="sendButton" class="send-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 12L2 7C2 6.45 2.196 6 2.588 5.65C2.98 5.3 3.467 5.15 4.05 5.2L19.5 7.45C20.167 7.55 20.708 7.825 21.125 8.275C21.542 8.725 21.75 9.25 21.75 9.85C21.75 10.45 21.542 10.975 21.125 11.425C20.708 11.875 20.167 12.15 19.5 12.25L4.05 14.8C3.467 14.867 2.98 14.717 2.588 14.35C2.196 13.983 2 13.517 2 12.95V12Z" fill="white"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="loadingIndicator" class="loading-indicator">
+                <span class="spinner"></span>Processing your question...
+            </div>
+            
+            <div id="errorMessage" class="error-message"></div>
+            
+            <div id="responseContainer" class="response-container"></div>
+        </div>
+        
+        <div id="historyContainer" style="display: none;"></div>
+        
+        <div id="feedbackContainer" style="display: none;">
+            <h2>Feedback Statistics</h2>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-title">Overall Feedback</div>
+                        <div class="stat-value" id="overallScore">0%</div>
+                    </div>
+                    <div class="pie-chart-container">
+                        <div class="pie-chart" id="feedbackPieChart"></div>
+                        <div class="pie-chart-inner">
+                            <div class="pie-value" id="positivePercentage">0%</div>
+                            <div>positive</div>
+                        </div>
+                    </div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color positive-color"></div>
+                            <span>Positive</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color negative-color"></div>
+                            <span>Negative</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-title">Feedback Summary</div>
+                    </div>
+                    <div class="chart-container" id="feedbackSummaryChart">
+                        <!-- Dynamic chart bars will be added here -->
+                    </div>
+                    <div class="stat-description">
+                        Based on all feedback collected from users interacting with the RFI application.
+                    </div>
+                </div>
+                
+                <div class="recent-feedback">
+                    <h3>Recent Feedback</h3>
+                    <div class="feedback-list" id="recentFeedbackList">
+                        <!-- Recent feedback items will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // API endpoint
+        const API_URL = "https://channel-factory-rfi.onrender.com";
+        
+        // DOM elements
+        const questionInput = document.getElementById('questionInput');
+        const sendButton = document.getElementById('sendButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+        const responseContainer = document.getElementById('responseContainer');
+        const historyContainer = document.getElementById('historyContainer');
+        const feedbackContainer = document.getElementById('feedbackContainer');
+        const chatTab = document.getElementById('chatTab');
+        const historyTab = document.getElementById('historyTab');
+        const feedbackTab = document.getElementById('feedbackTab');
+        
+        // Feedback stats
+        let feedbackStats = {
+            positive: 0,
+            negative: 0,
+            total: 0,
+            recentFeedback: []
+        };
+        
+        // Load feedback stats from localStorage if available
+        try {
+            const savedStats = localStorage.getItem('rfiFeedbackStats');
+            if (savedStats) {
+                feedbackStats = JSON.parse(savedStats);
+                updateFeedbackStats();
+            }
+        } catch (e) {
+            console.error('Error loading feedback stats:', e);
+        }
+        
+        // Tabs functionality
+        chatTab.addEventListener('click', () => {
+            chatTab.classList.add('active');
+            historyTab.classList.remove('active');
+            feedbackTab.classList.remove('active');
+            responseContainer.parentElement.style.display = 'block';
+            historyContainer.style.display = 'none';
+            feedbackContainer.style.display = 'none';
+        });
+        
+        historyTab.addEventListener('click', () => {
+            chatTab.classList.remove('active');
+            historyTab.classList.add('active');
+            feedbackTab.classList.remove('active');
+            responseContainer.parentElement.style.display = 'none';
+            historyContainer.style.display = 'block';
+            feedbackContainer.style.display = 'none';
+            updateHistoryDisplay();
+        });
+        
+        feedbackTab.addEventListener('click', () => {
+            chatTab.classList.remove('active');
+            historyTab.classList.remove('active');
+            feedbackTab.classList.add('active');
+            responseContainer.parentElement.style.display = 'none';
+            historyContainer.style.display = 'none';
+            feedbackContainer.style.display = 'block';
+            updateFeedbackStats();
+        });
+        
+        // Conversation history
+        let conversationHistory = [];
+        
+        // Load history from localStorage if available
+        try {
+            const savedHistory = localStorage.getItem('rfiHistory');
+            if (savedHistory) {
+                conversationHistory = JSON.parse(savedHistory);
+                updateHistoryDisplay();
+            }
+        } catch (e) {
+            console.error('Error loading history:', e);
+        }
+        
+        // Adjust textarea height based on content
+        questionInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            this.style.maxHeight = '150px';
+        });
+        
+        // Handle Enter key (Shift+Enter for new line)
+        questionInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendQuestion();
+            }
+        });
+        
+        // Send button click handler
+        sendButton.addEventListener('click', sendQuestion);
+        
+        // Function to send question to API
+        async function sendQuestion() {
+            const question = questionInput.value.trim();
+            if (!question) return;
+            
+            // Clear previous response and show loading
+            responseContainer.innerHTML = '';
+            errorMessage.classList.remove('active');
+            loadingIndicator.classList.add('active');
+            
+            // Disable send button during processing
+            sendButton.disabled = true;
+            
+            try {
+                // Set a longer timeout (60 seconds) for the fetch request
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds timeout
+                
+                // Send request to API
+                const response = await fetch(`${API_URL}/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    },
+                    body: JSON.stringify({ question }),
+                    signal: controller.signal
+                });
+                
+                // Clear the timeout
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Add to history
+                conversationHistory.unshift({
+                    question,
+                    answer: data.answer,
+                    sources: data.sources || [],
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Save to localStorage
+                try {
+                    localStorage.setItem('rfiHistory', JSON.stringify(conversationHistory.slice(0, 10)));
+                } catch (e) {
+                    console.error('Error saving history:', e);
+                }
+                
+                // Display response
+                const responseElement = document.createElement('div');
+                responseElement.className = 'response';
+                responseElement.innerHTML = `
+                    <div>${formatResponse(data.answer)}</div>
+                    <div class="response-controls">
+                        <button class="sources-button" id="sourcesBtn">Sources</button>
+                        <div class="feedback">
+                            <button class="feedback-button positive-btn" title="Helpful">👍</button>
+                            <button class="feedback-button negative-btn" title="Not Helpful">👎</button>
+                        </div>
+                    </div>
+                    <div class="sources-container" id="sourcesContainer">
+                        ${formatSources(data.sources || [])}
+                    </div>
+                `;
+                
+                responseContainer.appendChild(responseElement);
+                
+                // Add sources button functionality
+                const sourcesBtn = responseElement.querySelector('#sourcesBtn');
+                const sourcesContainer = responseElement.querySelector('#sourcesContainer');
+                
+                sourcesBtn.addEventListener('click', () => {
+                    sourcesContainer.classList.toggle('active');
+                    sourcesBtn.textContent = sourcesContainer.classList.contains('active') ? 'Sources ▲' : 'Sources ▼';
+                });
+                
+                // Add feedback button functionality
+                const positiveBtn = responseElement.querySelector('.positive-btn');
+                const negativeBtn = responseElement.querySelector('.negative-btn');
+                
+                positiveBtn.addEventListener('click', () => {
+                    // Clear previous feedback state
+                    positiveBtn.style.backgroundColor = '#4CAF50';
+                    negativeBtn.style.backgroundColor = 'transparent';
+                    
+                    // Record positive feedback
+                    recordFeedback('positive', question, data.answer);
+                });
+                
+                negativeBtn.addEventListener('click', () => {
+                    // Clear previous feedback state
+                    positiveBtn.style.backgroundColor = 'transparent';
+                    negativeBtn.style.backgroundColor = '#f44336';
+                    
+                    // Record negative feedback
+                    recordFeedback('negative', question, data.answer);
+                });
+                
+                // Update history display if history tab is active
+                if (historyTab.classList.contains('active')) {
+                    updateHistoryDisplay();
+                }
+                
+                // Clear input
+                questionInput.value = '';
+                questionInput.style.height = 'auto';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                if (error.name === 'AbortError') {
+                    errorMessage.textContent = 'Error: Request timed out after 60 seconds. The server might be busy or in a cold start. Please try again.';
+                } else {
+                    errorMessage.textContent = `Error: ${error.message || 'Failed to get response'}. Make sure you have a stable internet connection and try again.`;
+                }
+                errorMessage.classList.add('active');
+            } finally {
+                loadingIndicator.classList.remove('active');
+                sendButton.disabled = false;
+            }
+        }
+        
+        // Record feedback
+        function recordFeedback(type, question, answer) {
+            // Update feedback stats
+            if (type === 'positive') {
+                feedbackStats.positive++;
+            } else {
+                feedbackStats.negative++;
+            }
+            feedbackStats.total++;
+            
+            // Add to recent feedback
+            feedbackStats.recentFeedback.unshift({
+                type: type,
+                question: question,
+                answer: answer.substring(0, 100) + (answer.length > 100 ? '...' : ''),
+                date: new Date().toISOString()
+            });
+            
+            // Keep only the 5 most recent feedback items
+            if (feedbackStats.recentFeedback.length > 5) {
+                feedbackStats.recentFeedback = feedbackStats.recentFeedback.slice(0, 5);
+            }
+            
+            // Save to localStorage
+            try {
+                localStorage.setItem('rfiFeedbackStats', JSON.stringify(feedbackStats));
+            } catch (e) {
+                console.error('Error saving feedback stats:', e);
+            }
+            
+            // Update feedback stats display if visible
+            if (feedbackTab.classList.contains('active')) {
+                updateFeedbackStats();
+            }
+        }
+        
+        // Update feedback stats display
+        function updateFeedbackStats() {
+            // Calculate percentages
+            const total = feedbackStats.total;
+            const positivePercent = total > 0 ? Math.round((feedbackStats.positive / total) * 100) : 0;
+            const negativePercent = total > 0 ? Math.round((feedbackStats.negative / total) * 100) : 0;
+            
+            // Update overall score
+            document.getElementById('overallScore').textContent = `${positivePercent}%`;
+            document.getElementById('positivePercentage').textContent = `${positivePercent}%`;
+            
+            // Update pie chart
+            const pieChart = document.getElementById('feedbackPieChart');
+            pieChart.style.setProperty('--positive-percent', `${positivePercent}%`);
+            
+            // Update summary chart
+            const summaryChart = document.getElementById('feedbackSummaryChart');
+            summaryChart.innerHTML = '';
+            
+            // Add chart bars
+            if (total > 0) {
+                // Positive feedback bar
+                const positiveBar = document.createElement('div');
+                positiveBar.className = 'chart-bar';
+                positiveBar.style.height = `${positivePercent}%`;
+                positiveBar.style.backgroundColor = '#4CAF50';
+                
+                const positiveLabel = document.createElement('div');
+                positiveLabel.className = 'chart-label';
+                positiveLabel.textContent = 'Positive';
+                
+                const positiveValue = document.createElement('div');
+                positiveValue.className = 'chart-value';
+                positiveValue.textContent = feedbackStats.positive;
+                
+                positiveBar.appendChild(positiveLabel);
+                positiveBar.appendChild(positiveValue);
+                summaryChart.appendChild(positiveBar);
+                
+                // Negative feedback bar
+                const negativeBar = document.createElement('div');
+                negativeBar.className = 'chart-bar';
+                negativeBar.style.height = `${negativePercent}%`;
+                negativeBar.style.backgroundColor = '#f44336';
+                
+                const negativeLabel = document.createElement('div');
+                negativeLabel.className = 'chart-label';
+                negativeLabel.textContent = 'Negative';
+                
+                const negativeValue = document.createElement('div');
+                negativeValue.className = 'chart-value';
+                negativeValue.textContent = feedbackStats.negative;
+                
+                negativeBar.appendChild(negativeLabel);
+                negativeBar.appendChild(negativeValue);
+                summaryChart.appendChild(negativeBar);
+                
+                // Total feedback bar
+                const totalBar = document.createElement('div');
+                totalBar.className = 'chart-bar';
+                totalBar.style.height = '100%';
+                totalBar.style.backgroundColor = '#FFC107';
+                
+                const totalLabel = document.createElement('div');
+                totalLabel.className = 'chart-label';
+                totalLabel.textContent = 'Total';
+                
+                const totalValue = document.createElement('div');
+                totalValue.className = 'chart-value';
+                totalValue.textContent = feedbackStats.total;
+                
+                totalBar.appendChild(totalLabel);
+                totalBar.appendChild(totalValue);
+                summaryChart.appendChild(totalBar);
+            } else {
+                // No feedback yet
+                summaryChart.innerHTML = '<p>No feedback data available yet.</p>';
+            }
+            
+            // Update recent feedback list
+            const recentList = document.getElementById('recentFeedbackList');
+            recentList.innerHTML = '';
+            
+            if (feedbackStats.recentFeedback.length > 0) {
+                feedbackStats.recentFeedback.forEach(item => {
+                    const feedbackItem = document.createElement('div');
+                    feedbackItem.className = 'feedback-item';
+                    
+                    const date = new Date(item.date);
+                    const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                    
+                    feedbackItem.innerHTML = `
+                        <div class="feedback-header">
+                            <span class="feedback-type ${item.type === 'positive' ? 'positive' : 'negative'}">
+                                ${item.type === 'positive' ? '👍 Positive' : '👎 Negative'}
+                            </span>
+                            <span class="feedback-date">${formattedDate}</span>
+                        </div>
+                        <div class="feedback-question">${escapeHtml(item.question)}</div>
+                    `;
+                    
+                    recentList.appendChild(feedbackItem);
+                });
+            } else {
+                recentList.innerHTML = '<p>No feedback has been provided yet.</p>';
+            }
+        }
+        
+        // Format response with basic markdown
+        function formatResponse(text) {
+            if (!text) return '';
+            
+            // Replace newlines with <br>
+            text = text.replace(/\n/g, '<br>');
+            
+            // Bold text between ** **
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Italic text between * *
+            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            return text;
+        }
+        
+        // Format sources for display
+        function formatSources(sources) {
+            if (!sources || sources.length === 0) {
+                return '<p>No sources available</p>';
+            }
+            
+            return sources.map(source => {
+                const title = source.title || source.file || 'Unknown source';
+                return `<div class="source-item">${escapeHtml(title)}</div>`;
+            }).join('');
+        }
+        
+        // Update history display
+        function updateHistoryDisplay() {
+            if (conversationHistory.length === 0) {
+                historyContainer.innerHTML = '<p>No conversation history yet.</p>';
+                return;
+            }
+            
+            historyContainer.innerHTML = conversationHistory.map((item, index) => `
+                <div class="history-item">
+                    <div class="history-question">Q: ${escapeHtml(item.question)}</div>
+                    <div class="history-answer">${formatResponse(item.answer)}</div>
+                    ${item.sources && item.sources.length > 0 ? `
+                        <div class="sources">
+                            <div>Sources:</div>
+                            ${item.sources.map(source => `
+                                <div class="source-item">- ${escapeHtml(source.file || source.title || 'Unknown source')}</div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+        
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Add some demo feedback data if none exists
+        window.addEventListener('load', () => {            
+            // Add sample data if none exists
+            if (feedbackStats.total === 0) {
+                // Add sample data
+                feedbackStats = {
+                    positive: 7,
+                    negative: 2,
+                    total: 9,
+                    recentFeedback: [
+                        {
+                            type: 'positive',
+                            question: 'How does Channel Factory help with brand safety?',
+                            answer: 'Channel Factory provides comprehensive brand safety solutions through...',
+                            date: new Date().toISOString()
+                        },
+                        {
+                            type: 'positive',
+                            question: 'What are Channel Factory's core services?',
+                            answer: 'Channel Factory specializes in YouTube and CTV advertising solutions...',
+                            date: new Date(Date.now() - 3600000).toISOString()
+                        },
+                        {
+                            type: 'negative',
+                            question: 'How much does Channel Factory's service cost?',
+                            answer: 'Channel Factory offers customized pricing based on campaign needs...',
+                            date: new Date(Date.now() - 7200000).toISOString()
+                        }
+                    ]
+                };
+                
+                // Save to localStorage
+                try {
+                    localStorage.setItem('rfiFeedbackStats', JSON.stringify(feedbackStats));
+                } catch (e) {
+                    console.error('Error saving feedback stats:', e);
+                }
+            }
+            
+            // Update feedback stats display
+            updateFeedbackStats();
+        });
+    </script>
+</body>
+</html>
