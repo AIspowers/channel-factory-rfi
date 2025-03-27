@@ -1,42 +1,47 @@
 # Channel Factory RFI Application
 
-This repository contains the Channel Factory RFI (Request for Information) application, which allows users to ask questions about Channel Factory and receive AI-powered responses.
+This repository contains a standalone HTML application that connects to the Channel Factory RFI API hosted on Render.com.
 
-## Live Demo
+## Available Versions
 
-The application is hosted on GitHub Pages and can be accessed at:
-https://aispowers.github.io/channel-factory-rfi/
+- **Light Theme**: [https://aispowers.github.io/channel-factory-rfi/](https://aispowers.github.io/channel-factory-rfi/)
+- **Dark Theme**: [https://aispowers.github.io/channel-factory-rfi/dark.html](https://aispowers.github.io/channel-factory-rfi/dark.html) ← Recommended
 
 ## How to Use
 
-1. Open the application in your web browser
-2. Type your question in the input field
-3. Click "Send" to get a response
-4. The system may take 10-15 seconds to respond on the first query
-
-## How to Enable GitHub Pages
-
-To host this application on GitHub Pages:
-
-1. Go to the repository Settings tab
-2. Scroll down to the "GitHub Pages" section
-3. Under "Source", select "main" branch
-4. Click "Save"
-5. Wait a few minutes for the site to be published
-6. Once published, you'll see a message with the URL
-
-Your application will be available at: `https://aispowers.github.io/channel-factory-rfi/`
-
-## Technical Information
-
-- The frontend is a simple HTML application with JavaScript
-- The backend API is hosted on Render.com
-- The application uses the OpenAI API to power the responses
+1. Open either of the links above in your web browser
+2. Type your question in the text input area
+3. Press Enter or click the Send button
+4. Wait for the response from the API
+5. View sources and provide feedback as needed
 
 ## Troubleshooting
 
-If you encounter issues with the application:
+If you encounter any issues:
 
-1. Click "Show Debug Info" at the bottom of the page
-2. Click "Test API Connection" to check the API status
-3. If the API is not responding, it may be in a cold start state - try again in a few moments
+1. Check your internet connection
+2. Make sure the Channel Factory API is up and running
+3. Try refreshing the page
+4. Use the "Show Debug Info" button at the bottom of the page to test the API connection
+5. Clear your browser cache if you're seeing an outdated version
+
+## Technical Information
+
+This application:
+- Is a completely standalone HTML file with embedded CSS and JavaScript
+- Connects to the Channel Factory RFI API at https://channel-factory-rfi.onrender.com
+- Stores conversation history in your browser's localStorage
+- Does not require any installation or server setup
+
+## Development
+
+If you need to modify this application:
+
+1. Edit the HTML file directly
+2. Test it by opening the file in your browser
+3. Commit and push changes to this repository
+4. GitHub Pages will automatically update the live version
+
+## Privacy Note
+
+This application does not collect any personal data. All conversations are stored locally in your browser and are not transmitted to any server except for the question and response data sent to the Channel Factory API.
