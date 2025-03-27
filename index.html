@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Channel Factory RFI</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff;
+            color: #333333;
+            min-height: 100vh;
+        }
+        .app-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #ff4336;
+            margin-bottom: 20px;
+        }
+        .chat-container {
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .question-form {
+            display: flex;
+            flex-direction: column;
+        }
+        .question-input {
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .send-button {
+            padding: 12px 20px;
+            background-color: #ff4336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .send-button:hover {
+            background-color: #e53935;
+        }
+        .send-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .loading.active {
+            display: block;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,67,54,.3);
+            border-radius: 50%;
+            border-top-color: #ff4336;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .error-message {
+            color: #ff4336;
+            margin: 10px 0;
+            display: none;
+            padding: 10px;
+            background-color: rgba(255,67,54,.1);
+            border-radius: 4px;
+        }
+        .error-message.active {
+            display: block;
+        }
+        .response {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 4px solid #ff4336;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: pre-wrap;
+        }
+        .history-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .question {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .info-panel {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .info-panel h3 {
+            margin-top: 0;
+        }
+        .debug-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            display: none;
+            font-size: 12px;
+        }
+        .debug-panel.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <h1>Channel Factory RFI</h1>
+        
+        <div class="chat-container">
+            <form class="question-form" id="questionForm">
+                <input type="text" id="questionInput" class="question-input" placeholder="Ask a question about Channel Factory..." required>
+                <button type="submit" class="send-button" id="sendButton">Send</button>
+            </form>
+            
+            <div class="loading" id="loadingIndicator">
+                <span class="spinner"></span>Processing your question...
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+            
+            <div id="responseContainer"></div>
+        </div>
+        
+        <div id="historyContainer"></div>
+        
+        <div class="info-panel">
+            <h3>About this application</h3>
+            <p>This RFI app connects to the Channel Factory API hosted on Render.com.</p>
+            <p><strong>Note:</strong> The first query may take 10-15 seconds to process as the system warms up.</p>
+            <button id="toggleDebug">Show Debug Info</button>
+        </div>
+        
+        <div class="debug-panel" id="debugPanel">
+            <h3>Diagnostic Information</h3>
+            <div>
+                <button id="testHealthBtn">Test API Connection</button>
+                <div id="debugOutput"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // API endpoint
+        const API_URL = "https://channel-factory-rfi.onrender.com";
+        
+        // DOM elements
+        const questionForm = document.getElementById('questionForm');
+        const questionInput = document.getElementById('questionInput');
+        const sendButton = document.getElementById('sendButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+        const responseContainer = document.getElementById('responseContainer');
+        const historyContainer = document.getElementById('historyContainer');
+        const debugPanel = document.getElementById('debugPanel');
+        const debugOutput = document.getElementById('debugOutput');
+        
+        // Toggle debug panel
+        document.getElementById('toggleDebug').addEventListener('click', function() {
+            debugPanel.classList.toggle('active');
+            this.textContent = debugPanel.classList.contains('active') ? 'Hide Debug Info' : 'Show Debug Info';
+        });
+        
+        // Test health button
+        document.getElementById('testHealthBtn').addEventListener('click', async function() {
+            debugOutput.innerHTML = 'Testing API connection...';
+            try {
+                const response = await fetch(`${API_URL}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = text;
+                }
+                
+                debugOutput.innerHTML = `
+                    <p>Status: ${response.status} ${response.statusText}</p>
+                    <p>Response: ${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}</p>
+                    <p>Headers: ${formatHeaders(response.headers)}</p>
+                `;
+            } catch (error) {
+                debugOutput.innerHTML = `
+                    <p>Error: ${error.message}</p>
+                    <p>This could indicate a network issue or CORS restriction.</p>
+                `;
+            }
+        });
+        
+        function formatHeaders(headers) {
+            let result = '';
+            for (const [key, value] of headers.entries()) {
+                result += `${key}: ${value}\n`;
+            }
+            return result;
+        }
+        
+        // Store conversation history
+        let conversationHistory = [];
+        
+        // Load history from localStorage if available
+        try {
+            const savedHistory = localStorage.getItem('rfiHistory');
+            if (savedHistory) {
+                conversationHistory = JSON.parse(savedHistory);
+                updateHistoryDisplay();
+            }
+        } catch (e) {
+            console.error('Error loading history:', e);
+        }
+        
+        // Form submission
+        questionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const question = questionInput.value.trim();
+            if (!question) return;
+            
+            // Show loading state
+            showLoading(true);
+            hideError();
+            
+            try {
+                const response = await fetchWithTimeout(`${API_URL}/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin || 'file://'
+                    },
+                    body: JSON.stringify({ question }),
+                }, 60000); // 60 second timeout
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API returned status ${response.status}. Response: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data || !data.answer) {
+                    throw new Error('Invalid response from API - missing answer field');
+                }
+                
+                // Add to history
+                conversationHistory.unshift({
+                    question,
+                    answer: data.answer,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Save to localStorage
+                try {
+                    localStorage.setItem('rfiHistory', JSON.stringify(conversationHistory.slice(0, 10)));
+                } catch (e) {
+                    console.error('Error saving history:', e);
+                }
+                
+                // Display response
+                displayResponse(data.answer);
+                
+                // Update history display
+                updateHistoryDisplay();
+                
+                // Clear input
+                questionInput.value = '';
+                
+            } catch (error) {
+                console.error('Error sending question:', error);
+                showError(`Error: ${error.message}. Please check the debug panel for more information.`);
+                
+                // Show debug panel with diagnostic info
+                debugPanel.classList.add('active');
+                document.getElementById('toggleDebug').textContent = 'Hide Debug Info';
+                debugOutput.innerHTML = `
+                    <p><strong>Error details:</strong></p>
+                    <p>${error.message}</p>
+                    <p>Try clicking the "Test API Connection" button to diagnose the issue.</p>
+                `;
+            } finally {
+                showLoading(false);
+            }
+        });
+        
+        // Fetch with timeout
+        async function fetchWithTimeout(url, options, timeout = 30000) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    throw new Error('Request timed out. The server might be busy or in a cold start.');
+                }
+                throw error;
+            }
+        }
+        
+        // Display response
+        function displayResponse(answer) {
+            const responseElement = document.createElement('div');
+            responseElement.className = 'response';
+            responseElement.textContent = answer;
+            
+            responseContainer.innerHTML = '';
+            responseContainer.appendChild(responseElement);
+        }
+        
+        // Update history display
+        function updateHistoryDisplay() {
+            // Only show the latest 5 conversations
+            const historyToShow = conversationHistory.slice(0, 5);
+            
+            if (historyToShow.length === 0) {
+                historyContainer.innerHTML = '';
+                return;
+            }
+            
+            historyContainer.innerHTML = '<h2>Previous Questions</h2>';
+            
+            historyToShow.forEach(item => {
+                const historyElement = document.createElement('div');
+                historyElement.className = 'history-item';
+                
+                const questionElement = document.createElement('div');
+                questionElement.className = 'question';
+                questionElement.textContent = `Q: ${item.question}`;
+                
+                const answerElement = document.createElement('div');
+                answerElement.className = 'answer';
+                answerElement.textContent = `A: ${item.answer}`;
+                
+                historyElement.appendChild(questionElement);
+                historyElement.appendChild(answerElement);
+                
+                historyContainer.appendChild(historyElement);
+            });
+        }
+        
+        // Show/hide loading state
+        function showLoading(isLoading) {
+            loadingIndicator.classList.toggle('active', isLoading);
+            sendButton.disabled = isLoading;
+        }
+        
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('active');
+        }
+        
+        // Hide error message
+        function hideError() {
+            errorMessage.textContent = '';
+            errorMessage.classList.remove('active');
+        }
+        
+        // Run a diagnostic check on load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetchWithTimeout(`${API_URL}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }, 10000);
+                
+                if (response.ok) {
+                    console.log('API health check passed');
+                } else {
+                    console.warn('API health check failed with status:', response.status);
+                }
+            } catch (error) {
+                console.error('API health check error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
