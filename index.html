@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RFI Powered by Channel Factory</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
         body {
             margin: 0;
@@ -287,6 +290,9 @@
         const feedbackTab = document.getElementById('feedbackTab');
         const debugPanel = document.getElementById('debugPanel');
         const debugOutput = document.getElementById('debugOutput');
+        
+        // Set page version in console
+        console.log("Dark theme version 1.1");
         
         // Tabs functionality
         chatTab.addEventListener('click', () => {
