@@ -1163,3 +1163,329 @@ table {
   opacity: 0.7;
   margin-top: 0.5rem;
 }
+
+.stat-item.animated {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.stat-item.animated:hover {
+  transform: translateY(-5px);
+}
+
+.stat-value.counting {
+  animation: counting 1.5s ease-out;
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.stat-value.counted {
+  color: var(--text-color);
+  transition: color 0.5s ease;
+}
+
+@keyframes counting {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.stat-item.positive .stat-value.counting {
+  color: #4caf50;
+}
+
+.stat-item.negative .stat-value.counting {
+  color: #ff4b4b;
+}
+
+/* Stats Refresh Container */
+.stats-refresh-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.refresh-button {
+  background-color: var(--secondary-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Feedback Distribution */
+.feedback-distribution {
+  margin-top: 1rem;
+  height: 40px;
+  background-color: var(--secondary-bg);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  position: relative;
+  border: 1px solid var(--border-color);
+}
+
+.feedback-bar {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: white;
+  transition: width 1.5s ease-in-out;
+}
+
+.feedback-bar.positive {
+  background-color: rgba(76, 175, 80, 0.7);
+}
+
+.feedback-bar.negative {
+  background-color: rgba(255, 75, 75, 0.7);
+}
+
+/* Enhanced Stats Card */
+.stats-card {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0.5rem;
+}
+
+/* Enhanced Animation for Statistics */
+.stat-item.animated {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.stat-item.animated:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.stat-value.counting {
+  animation: counting 1.5s ease-out;
+  color: var(--accent-color);
+  font-weight: bold;
+  position: relative;
+}
+
+.stat-value.counting::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30%;
+  height: 3px;
+  background-color: currentColor;
+  border-radius: 3px;
+}
+
+.stat-value.counted {
+  color: var(--text-color);
+  transition: color 0.5s ease;
+}
+
+@keyframes counting {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.stat-item.positive .stat-value.counting {
+  color: #4caf50;
+}
+
+.stat-item.negative .stat-value.counting {
+  color: #ff4b4b;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* Comments Styling */
+.comments-list {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.comment-item {
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: var(--secondary-bg);
+  margin-bottom: 0.75rem;
+  border-left: 3px solid var(--accent-color);
+  transition: transform 0.2s ease;
+}
+
+.comment-item:hover {
+  transform: translateX(5px);
+}
+
+.comment-text {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.comment-meta {
+  font-size: 0.8rem;
+  color: #999;
+  text-align: right;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  background-color: var(--secondary-bg);
+  border-radius: 8px;
+  border: 1px dashed var(--border-color);
+  margin-top: 1rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .feedback-distribution {
+    height: 30px;
+  }
+}
+
+/* Search container styling */
+.search-container {
+  position: relative;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+}
+
+.clear-search {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.clear-search:hover {
+  opacity: 1;
+  background: none;
+}
+
+/* Highlight search results */
+.conversation-item.search-match {
+  border-color: var(--accent-color);
+  animation: pulse 2s ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(var(--accent-color-rgb), 0.5);
+  }
+  50% {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px 0 rgba(var(--accent-color-rgb), 0.3);
+  }
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(var(--accent-color-rgb), 0.5);
+  }
+}
+
+/* Responsive adjustments for search */
+@media (max-width: 600px) {
+  .search-container {
+    margin-bottom: 1rem;
+  }
+  
+  .search-input {
+    padding: 0.6rem 2.25rem 0.6rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .clear-search {
+    font-size: 1.1rem;
+  }
+}

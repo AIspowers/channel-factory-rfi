@@ -21,6 +21,15 @@ function App() {
   const [feedbackStatsLoading, setFeedbackStatsLoading] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredConversations, setFilteredConversations] = useState([]);
+  const [statsCounters, setStatsCounters] = useState({
+    total: 0,
+    helpful: 0,
+    notHelpful: 0,
+    percentage: 0
+  });
+  const [countingDone, setCountingDone] = useState(false);
 
   const [activeTab, setActiveTab] = useState("chat");
 
@@ -28,6 +37,7 @@ function App() {
 
   const textareaRef = useRef(null);
   const appContainerRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   // Handle mobile detection
   useEffect(() => {
@@ -79,42 +89,21 @@ function App() {
     }
   }, [question]);
 
-  const fetchFeedbackStats = async () => {
-    if (!showFeedbackStats) return;
-    
-    setFeedbackStatsLoading(true);
-    try {
-      const res = await fetch(`${apiBaseUrl}/feedback/stats`);
-      if (res.ok) {
-        const data = await res.json();
-        // Transform the data to match the expected format
-        setFeedbackStats({
-          total: data.total_feedback || 0,
-          helpful: data.helpful || 0,
-          percentage: data.helpful_percentage || 0,
-          comments: data.comments || []
-        });
-      } else {
-        console.error("Failed to fetch feedback stats");
-        setFeedbackStats({
-          total: 0,
-          helpful: 0,
-          percentage: 0,
-          comments: []
-        });
-      }
-    } catch (err) {
-      console.error("Error fetching feedback stats:", err);
-      setFeedbackStats({
-        total: 0,
-        helpful: 0,
-        percentage: 0,
-        comments: []
-      });
-    } finally {
-      setFeedbackStatsLoading(false);
+  // Filter conversations based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredConversations(conversations);
+      return;
     }
-  };
+    
+    const query = searchQuery.toLowerCase();
+    const filtered = conversations.filter(conv => 
+      conv.question.toLowerCase().includes(query) || 
+      (conv.answer && conv.answer.toLowerCase().includes(query))
+    );
+    
+    setFilteredConversations(filtered);
+  }, [searchQuery, conversations]);
 
   const fetchConversations = async () => {
     if (!showDashboard) return;
@@ -127,15 +116,115 @@ function App() {
         // Sort by timestamp, newest first
         data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         setConversations(data);
+        setFilteredConversations(data); // Initialize filtered conversations
       } else {
         setConversations([]);
+        setFilteredConversations([]);
       }
     } catch (err) {
       console.error("Error fetching conversations:", err);
       setConversations([]);
+      setFilteredConversations([]);
     } finally {
       setConversationsLoading(false);
     }
+  };
+
+  const fetchFeedbackStats = async () => {
+    if (!showFeedbackStats) return;
+    
+    setFeedbackStatsLoading(true);
+    setCountingDone(false);
+    
+    try {
+      const res = await fetch(`${apiBaseUrl}/feedback/stats`);
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Feedback stats data:", data);
+        
+        // Reset counters first
+        setStatsCounters({
+          total: 0,
+          helpful: 0,
+          notHelpful: 0,
+          percentage: 0
+        });
+        
+        // Transform the data to match the expected format from API response
+        const statsData = {
+          total: data.total_conversations || 0,
+          helpful: data.helpful_count || 0,
+          notHelpful: data.not_helpful_count || 0,
+          percentage: data.helpful_percentage || 0,
+          comments: data.comments || []
+        };
+        
+        setFeedbackStats(statsData);
+        
+        // Start counter animation after a short delay
+        setTimeout(() => {
+          startCounterAnimation(statsData);
+        }, 300);
+      } else {
+        console.error("Failed to fetch feedback stats");
+        setFeedbackStats({
+          total: 0,
+          helpful: 0,
+          notHelpful: 0,
+          percentage: 0,
+          comments: []
+        });
+        setCountingDone(true);
+      }
+    } catch (err) {
+      console.error("Error fetching feedback stats:", err);
+      setFeedbackStats({
+        total: 0,
+        helpful: 0,
+        notHelpful: 0,
+        percentage: 0,
+        comments: []
+      });
+      setCountingDone(true);
+    } finally {
+      setFeedbackStatsLoading(false);
+    }
+  };
+  
+  const startCounterAnimation = (stats) => {
+    const duration = 1500; // animation duration in ms
+    const steps = 30; // number of steps
+    const interval = duration / steps;
+    
+    let currentStep = 0;
+    
+    const animateCounter = () => {
+      if (currentStep >= steps) {
+        // Set final values to ensure accuracy
+        setStatsCounters({
+          total: stats.total,
+          helpful: stats.helpful,
+          notHelpful: stats.notHelpful,
+          percentage: stats.percentage
+        });
+        setCountingDone(true);
+        return;
+      }
+      
+      const progress = (currentStep + 1) / steps;
+      
+      setStatsCounters({
+        total: Math.floor(stats.total * progress),
+        helpful: Math.floor(stats.helpful * progress),
+        notHelpful: Math.floor(stats.notHelpful * progress),
+        percentage: parseFloat((stats.percentage * progress).toFixed(1))
+      });
+      
+      currentStep++;
+      setTimeout(animateCounter, interval);
+    };
+    
+    animateCounter();
   };
 
   useEffect(() => {
@@ -148,6 +237,22 @@ function App() {
       e.preventDefault();
       if (question.trim()) {
         handleSubmit(e);
+      }
+    }
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setSearchQuery("");
+      if (searchInputRef.current) {
+        searchInputRef.current.blur();
+      }
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredConversations.length > 0 && searchQuery.trim() !== "") {
+        // Focus on the first result
+        document.querySelector('.conversation-item')?.focus();
       }
     }
   };
@@ -305,6 +410,30 @@ function App() {
       return (
         <div className="dashboard">
           <h2>Conversation History</h2>
+          
+          {!selectedConversation && (
+            <div className="search-container">
+              <input
+                ref={searchInputRef}
+                type="text"
+                className="search-input"
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+              />
+              {searchQuery && (
+                <button 
+                  className="clear-search" 
+                  onClick={() => setSearchQuery("")}
+                  title="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          )}
+          
           {conversationsLoading ? (
             <div className="loading">Loading conversations...</div>
           ) : selectedConversation ? (
@@ -371,11 +500,13 @@ function App() {
                 )}
               </div>
             </div>
-          ) : conversations.length === 0 ? (
-            <div className="no-conversations">No conversations found.</div>
+          ) : filteredConversations.length === 0 ? (
+            <div className="no-conversations">
+              {searchQuery ? "No conversations match your search." : "No conversations found."}
+            </div>
           ) : (
             <div className="conversations-list">
-              {conversations.map((conv) => (
+              {filteredConversations.map((conv) => (
                 <div
                   key={conv.conversation_id}
                   className="conversation-item"
@@ -424,47 +555,89 @@ function App() {
             </div>
           ) : (
             <div className="stats-container">
+              {/* Main Stats Card with Animation */}
               <div className="stats-card">
                 <h3>Overall Feedback</h3>
                 <div className="stats-grid">
-                  <div className="stat-item">
-                    <div className="stat-value">{feedbackStats.total}</div>
+                  <div className="stat-item animated" onClick={() => !countingDone && fetchFeedbackStats()}>
+                    <div className={`stat-value ${!countingDone ? 'counting' : 'counted'}`}>
+                      {statsCounters.total}
+                    </div>
                     <div className="stat-label">Total Feedback</div>
                   </div>
-                  <div className="stat-item positive">
-                    <div className="stat-value">{feedbackStats.helpful}</div>
+                  <div className="stat-item positive animated" onClick={() => !countingDone && fetchFeedbackStats()}>
+                    <div className={`stat-value ${!countingDone ? 'counting' : 'counted'}`}>
+                      {statsCounters.helpful}
+                    </div>
                     <div className="stat-label">Helpful</div>
                   </div>
-                  <div className="stat-item negative">
-                    <div className="stat-value">
-                      {feedbackStats.total - feedbackStats.helpful}
+                  <div className="stat-item negative animated" onClick={() => !countingDone && fetchFeedbackStats()}>
+                    <div className={`stat-value ${!countingDone ? 'counting' : 'counted'}`}>
+                      {statsCounters.notHelpful}
                     </div>
                     <div className="stat-label">Not Helpful</div>
                   </div>
-                  <div className="stat-item">
-                    <div className="stat-value">
-                      {feedbackStats.percentage.toFixed(1)}%
+                  <div className="stat-item animated" onClick={() => !countingDone && fetchFeedbackStats()}>
+                    <div className={`stat-value ${!countingDone ? 'counting' : 'counted'}`}>
+                      {statsCounters.percentage}%
                     </div>
                     <div className="stat-label">Helpfulness Rate</div>
                   </div>
                 </div>
+                
+                {/* Refresh button for stats */}
+                <div className="stats-refresh-container">
+                  <button 
+                    className="refresh-button" 
+                    onClick={fetchFeedbackStats}
+                    disabled={feedbackStatsLoading}
+                  >
+                    {feedbackStatsLoading ? 'Refreshing...' : 'Refresh Stats'}
+                  </button>
+                </div>
               </div>
 
-              {feedbackStats.comments && feedbackStats.comments.length > 0 && (
+              {/* Visual representation of feedback ratio */}
+              <div className="stats-card">
+                <h3>Feedback Distribution</h3>
+                <div className="feedback-distribution">
+                  <div 
+                    className="feedback-bar positive" 
+                    style={{ 
+                      width: `${statsCounters.total > 0 ? (statsCounters.helpful / statsCounters.total) * 100 : 0}%`,
+                      transition: 'width 1.5s ease-in-out'
+                    }}
+                  >
+                    👍
+                  </div>
+                  <div 
+                    className="feedback-bar negative" 
+                    style={{ 
+                      width: `${statsCounters.total > 0 ? (statsCounters.notHelpful / statsCounters.total) * 100 : 0}%`,
+                      transition: 'width 1.5s ease-in-out'
+                    }}
+                  >
+                    👎
+                  </div>
+                </div>
+              </div>
+
+              {/* Comments section - only show if there are comments */}
+              {feedbackStats.comments && Array.isArray(feedbackStats.comments) && feedbackStats.comments.length > 0 ? (
                 <div className="stats-card">
                   <h3>Recent Comments</h3>
                   <div className="comments-list">
                     {feedbackStats.comments.map((comment, index) => (
                       <div key={index} className="comment-item">
-                        <div className="comment-text">{comment.text}</div>
+                        <div className="comment-text">{comment.text || comment.comments || "No comment text"}</div>
                         <div className="comment-meta">
-                          {formatDate(comment.timestamp)}
+                          {formatDate(comment.timestamp || new Date())}
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* Add an empty state message when there's no feedback */}
               {feedbackStats.total === 0 && (
@@ -478,8 +651,8 @@ function App() {
         </div>
       );
     } else {
-  return (
-    <>
+      return (
+        <>
           <div className="chat-container">
             <form className="question-form" onSubmit={handleSubmit}>
               <textarea
@@ -582,7 +755,7 @@ function App() {
                         </button>
                       </div>
                       {feedbackSubmitted && <div className="feedback-thank-you">Thank you for your feedback!</div>}
-      </div>
+                    </div>
                   ) : showFeedbackComment ? (
                     <form
                       className="feedback-comment-form"
@@ -604,7 +777,7 @@ function App() {
                         </button>
                         <button type="submit" disabled={feedbackSubmitting}>
                           {feedbackSubmitting ? "Submitting..." : "Submit"}
-        </button>
+                        </button>
                       </div>
                     </form>
                   ) : (
@@ -615,7 +788,7 @@ function App() {
                 </div>
               </div>
             )}
-      </div>
+          </div>
         </>
       );
     }

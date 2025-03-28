@@ -1,6 +1,25 @@
 # Environment variables
-.env*
+.env
+.env.*
 !.env.sample
+
+# Credentials
+*credentials.json
+*token.json
+*token-*.json
+*.keys.json
+*oauth*.json
+gdrive-*.json
+
+# Personal directories
+~/*
+.cursor/
+
+# Node modules
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
 
 # Python
 __pycache__/
@@ -24,25 +43,23 @@ var/
 .installed.cfg
 *.egg
 venv/
-.venv/
+venv_*/
 
-# Node.js
-node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Distribution / packaging
-frontend/dist/
-rfi-interface/dist/
-
-# IDE
-.idea/
-.vscode/
+# Editor directories and files
+.idea
+.vscode
 *.swp
 *.swo
+*~
 
-# OS
+# OS specific
 .DS_Store
 .DS_Store?
 ._*
