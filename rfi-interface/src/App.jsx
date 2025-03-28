@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
+import { API_BASE_URL, ENDPOINTS } from "./config.js";
 
 function App() {
   const [question, setQuestion] = useState("");
@@ -33,7 +34,7 @@ function App() {
 
   const [activeTab, setActiveTab] = useState("chat");
 
-  const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:8001";
+  const apiBaseUrl = API_BASE_URL;
 
   const textareaRef = useRef(null);
   const appContainerRef = useRef(null);
@@ -110,7 +111,7 @@ function App() {
     
     setConversationsLoading(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/conversations`);
+      const res = await fetch(`${apiBaseUrl}${ENDPOINTS.CONVERSATIONS}`);
       if (res.ok) {
         const data = await res.json();
         // Sort by timestamp, newest first
@@ -137,7 +138,7 @@ function App() {
     setCountingDone(false);
     
     try {
-      const res = await fetch(`${apiBaseUrl}/feedback/stats`);
+      const res = await fetch(`${apiBaseUrl}${ENDPOINTS.FEEDBACK_STATS}`);
       if (res.ok) {
         const data = await res.json();
         console.log("Feedback stats data:", data);
@@ -272,9 +273,9 @@ function App() {
     const currentQuestion = question;
 
     try {
-      console.log(`Sending request to: ${apiBaseUrl}/search`);
+      console.log(`Sending request to: ${apiBaseUrl}${ENDPOINTS.SEARCH}`);
       
-      const res = await fetch(`${apiBaseUrl}/search`, {
+      const res = await fetch(`${apiBaseUrl}${ENDPOINTS.SEARCH}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: currentQuestion }),
@@ -320,7 +321,7 @@ function App() {
     setFeedbackSubmitting(true);
     
     try {
-      const res = await fetch(`${apiBaseUrl}/feedback`, {
+      const res = await fetch(`${apiBaseUrl}${ENDPOINTS.FEEDBACK}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -354,7 +355,7 @@ function App() {
 
     setFeedbackSubmitting(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/feedback`, {
+      const res = await fetch(`${apiBaseUrl}${ENDPOINTS.FEEDBACK}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,13 +1,33 @@
+# Render deployment configuration
 services:
+  # Backend API service
   - type: web
-    name: channel-factory-rfi
+    name: rfi-api
     env: python
-    region: oregon
     plan: free
-    buildCommand: npm install --prefix rfi-interface && npm run build --prefix rfi-interface && pip install -r requirements.txt && mkdir -p frontend/dist && cp -r rfi-interface/dist/* frontend/dist/
-    startCommand: gunicorn responses_api:app --bind 0.0.0.0:$PORT --workers 2 --worker-class uvicorn.workers.UvicornWorker
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd rfi-interface && python start_api.py
     envVars:
       - key: OPENAI_API_KEY
-        sync: false
+        sync: false # User must set this manually in the Render dashboard
+      - key: PORT
+        value: 8001
       - key: PYTHON_VERSION
-        value: 3.10.0 
+        value: 3.10.0
+      - key: FRONTEND_URL
+        value: https://rfi-interface.onrender.com
+
+  # Frontend service
+  - type: web
+    name: rfi-interface
+    env: node
+    plan: free
+    buildCommand: cd rfi-interface && ./build.sh
+    startCommand: cd rfi-interface && node server.js
+    envVars:
+      - key: VITE_API_URL
+        value: https://rfi-api.onrender.com # Update this with your actual API service URL
+      - key: PORT
+        value: 10000
+      - key: NODE_VERSION
+        value: 18.0.0 

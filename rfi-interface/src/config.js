@@ -1,16 +1,20 @@
-// Configuration for the RFI interface
+// Config for the RFI interface application
 
-// Get the API base URL from environment variables
-// This allows us to switch between different backends
-const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8002';
+// Base API URL - will use environment variable in production or fallback to localhost for development
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 
-// Determine which API implementation we're using based on the port
-const isResponsesApi = apiBaseUrl.includes(':8002');
+// Enable/disable debug logging
+export const DEBUG_MODE = import.meta.env.VITE_DEBUG_MODE === 'true' || false;
 
-// Export the configuration
-export default {
-  apiBaseUrl,
-  isResponsesApi,
-  apiName: isResponsesApi ? 'RFI Responses API' : 'RFI Assistant API',
-  apiVersion: '1.0.0'
+// Endpoints
+export const ENDPOINTS = {
+  SEARCH: '/search',
+  FEEDBACK: '/feedback',
+  CONVERSATIONS: '/conversations',
+  FEEDBACK_STATS: '/feedback/stats'
+};
+
+// Default settings
+export const DEFAULT_SETTINGS = {
+  MAX_SOURCES: 5,
 }; 

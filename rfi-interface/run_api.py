@@ -7,16 +7,14 @@ from typing import List, Dict, Optional, Any
 import uvicorn
 import re
 from pydantic import BaseModel
+from api import app as api_app
 
-app = FastAPI()
+app = api_app
 
-# Configure CORS for development
+# Add CORS middleware with proper configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # Vite's default dev server
-        "https://3bf7-2a02-a31b-83fe-600-a5ff-525c-5da5-bf71.ngrok-free.app"  # New ngrok URL
-    ],
+    allow_origins=["*"],  # For production, replace with specific origins like "https://your-frontend.onrender.com"
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
